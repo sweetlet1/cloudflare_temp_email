@@ -22,12 +22,24 @@ jobs:
         with:
           node-version: 22
 
-      - uses: pnpm/action-setup@v5
-        name: Install pnpm
+      - name: Install pnpm
+        uses: pnpm/action-setup@v5
         id: pnpm-install
         with:
           version: 10
           run_install: false
+
+      - name: Cache pnpm dependencies
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: ${{ runner.os }}-pnpm-frontend-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+
+      - name: Cache npm worker dependencies
+        uses: actions/cache@v4
+        with:
+          path: worker/node_modules
+          key: ${{ runner.os }}-npm-worker-${{ hashFiles('worker/package-lock.json','worker/package.json') }}
 
       - name: Deploy Backend for ${{ github.ref_name }}
         run: |
@@ -56,24 +68,29 @@ jobs:
           npm install
 
           if [ -n "$use_mail_wasm_parser" ]; then
-            echo "Using mail-parser-wasm-worker"
+            echo "Using mail‑parser‑wasm‑worker"
             npm install mail-parser-wasm-worker
-            git apply ../.github/config/mail-parser-wasm-worker.patch
-            echo "Applied mail-parser-wasm-worker patch"
+            PATCH_FILE="../.github/config/mail-parser-wasm-worker.patch"
+            if [ -f "$PATCH_FILE" ]; then
+              git apply "$PATCH_FILE"
+              echo "Patch applied successfully"
+            else
+              echo "Warning: patch file $PATCH_FILE not found, skip patching"
+            fi
           fi
 
           if [ "$debug_mode" = "true" ]; then
             npx wrangler deploy
           else
-            if npx wrangler deploy >/dev/null 2>&1; then
-              echo "Deploy succeeded"
-            else
-              code=$?
-              echo "Command failed with exit code $code"
-              exit "$code"
+            # 只屏蔽stdout，保留stderr输出，部署失败可以看到真实报错
+            npx wrangler deploy >/dev/null
+            DEPLOY_EXIT=$?
+            if [ $DEPLOY_EXIT -ne 0 ]; then
+              echo "wrangler deploy failed, exit code: $DEPLOY_EXIT"
+              exit $DEPLOY_EXIT
             fi
           fi
-          echo "Deployed for tag ${{ github.ref_name }}"
+          echo "✅ Deployed for tag ${{ github.ref_name }}"
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
