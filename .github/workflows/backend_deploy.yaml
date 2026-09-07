@@ -39,6 +39,8 @@ jobs:
         with:
           path: worker/node_modules
           key: ${{ runner.os }}-npm-worker-${{ hashFiles('worker/package-lock.json','worker/package.json') }}
+      - name: Upgrade wrangler to latest
+        run: npm install -g wrangler@latest
       - name: Deploy Backend for ${{ github.ref_name }}
         run: |
           echo "CLOUDFLARE_ACCOUNT_ID length: ${#CLOUDFLARE_ACCOUNT_ID}"
@@ -74,9 +76,9 @@ jobs:
             fi
           fi
           if [ "$debug_mode" = "true" ]; then
-            npx wrangler deploy --account-id "${CLOUDFLARE_ACCOUNT_ID}" --api-token "${CLOUDFLARE_API_TOKEN}"
+            npx wrangler deploy
           else
-            npx wrangler deploy --account-id "${CLOUDFLARE_ACCOUNT_ID}" --api-token "${CLOUDFLARE_API_TOKEN}" >/dev/null
+            npx wrangler deploy >/dev/null
             DEPLOY_EXIT=$?
             if [ $DEPLOY_EXIT -ne 0 ]; then
               echo "wrangler deploy failed, exit code: $DEPLOY_EXIT"
