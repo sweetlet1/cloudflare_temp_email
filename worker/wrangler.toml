@@ -1,0 +1,58 @@
+name = "cloudflare_temp_email"
+main = "src/worker.ts"
+compatibility_date = "2025-04-01"
+compatibility_flags = [ "nodejs_compat" ]
+keep_vars = true
+
+# if you want use custom_domain, you need to add routes
+# routes = [
+# 	{ pattern = "temp-email-api.xxxxx.xyz", custom_domain = true },
+# ]
+# if you want deploy worker with frontend assets, you need to add assets
+# [assets]
+# directory = "../frontend/dist/"
+# binding = "ASSETS"
+# run_worker_first = true
+# enable cron if you want set auto clean up
+# [triggers]
+# crons = [ "0 0 * * *" ]
+# Per-run limit for mail, sent-mail, and creation/activity-based address cleanup. Defaults to 3000, maximum 5000.
+# CLEANUP_BATCH_SIZE = 3000
+# send_email = [
+#    { name = "SEND_MAIL" },
+# ]
+# SEND_MAIL_DOMAINS = ["example.com", "mail.example.com"]
+
+[vars]
+PREFIX = "tmp"
+DEFAULT_DOMAINS = "${{ secrets.DEFAULT_DOMAINS }}"
+DOMAINS = "${{ secrets.DOMAINS }}"
+JWT_SECRET = "${{ secrets.JWT_SECRET }}"
+BLACK_LIST = ""
+ENABLE_USER_CREATE_EMAIL = true
+ENABLE_USER_DELETE_EMAIL = true
+ENABLE_AUTO_REPLY = false
+
+[[d1_databases]]
+binding = "DB"
+database_name = "${{ secrets.D1_DATABASE_NAME }}"
+database_id = "${{ secrets.D1_DATABASE_ID }}"
+
+# Workers AI binding (required for AI email extraction)
+# [ai]
+# binding = "AI"
+# kv config for send email verification code
+# [[kv_namespaces]]
+# binding = "KV"
+# id = "xxxx"
+# ratelimit config for /api/new_address
+# [[unsafe.bindings]]
+# name = "RATE_LIMITER"
+# type = "ratelimit"
+# namespace_id = "1001"
+# # 10 requests per minute
+# simple = { limit = 10, period = 60 }
+# binding another worker service (parse the code or link), e.g. auth-inbox
+# [[services]]
+# binding = "AUTH_INBOX"
+# service = "auth-inbox"
