@@ -41,6 +41,8 @@ jobs:
           key: ${{ runner.os }}-npm-worker-${{ hashFiles('worker/package-lock.json','worker/package.json') }}
       - name: Deploy Backend for ${{ github.ref_name }}
         run: |
+          echo "CLOUDFLARE_ACCOUNT_ID length: ${#CLOUDFLARE_ACCOUNT_ID}"
+          echo "CLOUDFLARE_API_TOKEN length: ${#CLOUDFLARE_API_TOKEN}"
           export use_worker_assets=${{ secrets.USE_WORKER_ASSETS }}
           export use_worker_assets_with_telegram=${{ secrets.USE_WORKER_ASSETS_WITH_TELEGRAM }}
           if [ -n "$use_worker_assets" ]; then
@@ -72,9 +74,9 @@ jobs:
             fi
           fi
           if [ "$debug_mode" = "true" ]; then
-            npx wrangler deploy
+            npx wrangler deploy --account-id "${CLOUDFLARE_ACCOUNT_ID}" --api-token "${CLOUDFLARE_API_TOKEN}"
           else
-            npx wrangler deploy >/dev/null
+            npx wrangler deploy --account-id "${CLOUDFLARE_ACCOUNT_ID}" --api-token "${CLOUDFLARE_API_TOKEN}" >/dev/null
             DEPLOY_EXIT=$?
             if [ $DEPLOY_EXIT -ne 0 ]; then
               echo "wrangler deploy failed, exit code: $DEPLOY_EXIT"
