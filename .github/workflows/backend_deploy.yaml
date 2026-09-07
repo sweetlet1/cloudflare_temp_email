@@ -63,8 +63,6 @@ jobs:
           export use_mail_wasm_parser=${{ secrets.BACKEND_USE_MAIL_WASM_PARSER }}
           cd worker/
           printf '%s\n' "$WRANGLER_TOML_CONTENT" > wrangler.toml
-          # 方案A关键：动态追加 account_id 到 wrangler.toml，避免调用memberships接口报10000
-          echo "account_id = \"${CLOUDFLARE_ACCOUNT_ID}\"" >> wrangler.toml
           npm install
           if [ -n "$use_mail_wasm_parser" ]; then
             echo "Using mail‑parser‑wasm‑worker"
